@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureScan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:        #0f0f0f;
+  --bg1:       #141414;
+  --bg2:       #1a1a1a;
+  --bg3:       #202020;
+  --border:    #2a2a2a;
+  --border2:   #333;
+  --text:      #d4cfc8;
+  --text2:     #9a9490;
+  --text3:     #5a5550;
+  --beige:     #c8b89a;
+  --beige2:    #a09278;
+  --beige3:    #6e6254;
+  --sand:      #e8dfd0;
+  --warm:      #f0e8d8;
+  --green:     #7aab82;
+  --green2:    #4a7a52;
+  --red:       #c0614a;
+  --red2:      #8a3828;
+  --yellow:    #b8962a;
+  --yellow2:   #8a6e18;
+  --r:5px;--r2:8px;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg1)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+
+/* ── Layout ── */
+#app{max-width:1200px;margin:0 auto;padding:0 24px 80px}
+
+/* ── Header ── */
+header{display:flex;align-items:center;justify-content:space-between;padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:32px}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-mark{width:36px;height:36px;border:1px solid var(--beige3);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;color:var(--beige);letter-spacing:1px}
+.logo-text{font-family:var(--mono);font-size:16px;font-weight:500;color:var(--sand);letter-spacing:2px}
+.logo-sub{font-size:11px;color:var(--text3);letter-spacing:1px;margin-top:1px}
+.header-pills{display:flex;gap:10px;align-items:center}
+.pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid var(--border2);border-radius:99px;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;background:var(--bg1)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--border2);transition:.3s}
+.dot.on{background:var(--green);box-shadow:0 0 6px var(--green2)}
+.dot.off{background:var(--red)}
+
+/* ── Input panel ── */
+.panel{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r2);padding:24px;margin-bottom:20px}
+.panel-label{font-family:var(--mono);font-size:10px;color:var(--beige3);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}
+
+/* Source tabs */
+.src-tabs{display:flex;gap:2px;margin-bottom:20px;background:var(--bg2);border-radius:var(--r);padding:3px}
+.src-tab{flex:1;padding:8px 12px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3);cursor:pointer;border-radius:4px;transition:.15s;letter-spacing:.5px;border:none;background:transparent}
+.src-tab.active{background:var(--bg3);color:var(--beige);border:1px solid var(--border2)}
+.src-pane{display:none}.src-pane.active{display:block}
+
+/* Form elements */
+.row{display:grid;gap:12px;align-items:end;margin-bottom:12px}
+.r2{grid-template-columns:1fr auto}
+.r3{grid-template-columns:1fr auto auto}
+.field{display:flex;flex-direction:column;gap:5px}
+.lbl{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
+input[type=text],input[type=url],select{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);
+  color:var(--text);font-family:var(--mono);font-size:12px;padding:9px 12px;
+  outline:none;transition:.2s;width:100%
+}
+input:focus,select:focus{border-color:var(--beige3);background:var(--bg3)}
+input::placeholder{color:var(--text3)}
+
+/* Drop zone */
+.dropzone{
+  border:1px dashed var(--border2);border-radius:var(--r2);
+  padding:32px 20px;text-align:center;cursor:pointer;transition:.2s;
+  background:var(--bg2);position:relative;overflow:hidden
+}
+.dropzone:hover,.dropzone.drag{border-color:var(--beige3);background:var(--bg3)}
+.dropzone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dz-icon{font-size:28px;margin-bottom:8px;opacity:.5}
+.dz-text{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.5px}
+.dz-file{font-family:var(--mono);font-size:12px;color:var(--beige);margin-top:6px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 20px;border:none;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:500;cursor:pointer;transition:.2s;letter-spacing:.5px;white-space:nowrap}
+.btn-primary{background:var(--beige3);color:var(--warm);border:1px solid var(--beige2)}
+.btn-primary:hover:not(:disabled){background:var(--beige2);color:var(--warm)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--text3);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--beige3);color:var(--beige)}
+.btn-sm{padding:5px 12px;font-size:11px}
+.btn-danger-ghost{background:transparent;color:var(--red);border:1px solid rgba(192,97,74,.3)}
+.btn-danger-ghost:hover{border-color:var(--red);background:rgba(192,97,74,.08)}
+
+/* ── Progress log ── */
+.log{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:16px 20px;font-family:var(--mono);font-size:11px;max-height:160px;overflow-y:auto;display:none;margin-bottom:20px}
+.log.show{display:block}
+.log-line{display:flex;gap:10px;margin-bottom:2px;animation:fi .2s ease}
+.lt{color:var(--text3)}.li{color:var(--beige)}.lok{color:var(--green)}.lerr{color:var(--red)}.lwarn{color:var(--yellow)}
+@keyframes fi{from{opacity:0;transform:translateX(-4px)}to{opacity:1}}
+.blink{display:inline-block;width:7px;height:11px;background:var(--beige3);vertical-align:middle;animation:bl 1s step-end infinite;margin-left:4px}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ── Stats row ── */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;display:none}
+.stats.show{display:grid}
+.stat{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px}
+.stat-n{font-family:var(--mono);font-size:28px;font-weight:300;line-height:1;margin-bottom:4px}
+.stat-n.red{color:var(--red)}.stat-n.yellow{color:var(--yellow)}.stat-n.green{color:var(--green)}.stat-n.beige{color:var(--beige)}
+.stat-l{font-size:11px;color:var(--text3);letter-spacing:.5px}
+.stat-bar{height:2px;border-radius:99px;margin-top:10px;background:var(--border)}
+.stat-bar-fill{height:100%;border-radius:99px;transition:width 1s ease}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:24px;display:none}
+.tabs.show{display:flex}
+.tab{padding:10px 18px;font-family:var(--mono);font-size:11px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;letter-spacing:.5px;margin-bottom:-1px;user-select:none}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--beige);border-bottom-color:var(--beige)}
+.tc{display:none}.tc.active{display:block}
+
+/* ── Findings ── */
+.filter-row{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.fbtn{padding:4px 12px;border-radius:99px;font-family:var(--mono);font-size:10px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text3);transition:.15s;letter-spacing:.5px}
+.fbtn:hover{border-color:var(--beige3);color:var(--text)}
+.fbtn.a{border-color:var(--beige3);color:var(--beige);background:rgba(200,184,154,.06)}
+.fbtn.a-H{border-color:var(--red);color:var(--red);background:rgba(192,97,74,.06)}
+.fbtn.a-M{border-color:var(--yellow);color:var(--yellow);background:rgba(184,150,42,.06)}
+.fbtn.a-L{border-color:var(--green);color:var(--green);background:rgba(122,171,130,.06)}
+
+.ftable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+.ftable th{background:var(--bg2);padding:9px 12px;text-align:left;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.ftable td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.ftable tr.frow{cursor:pointer;transition:.1s}
+.ftable tr.frow:hover{background:rgba(200,184,154,.03)}
+.ftable tr.frow.open{background:rgba(200,184,154,.05)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:3px;font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.b-H{background:rgba(192,97,74,.12);color:var(--red);border:1px solid rgba(192,97,74,.2)}
+.b-M{background:rgba(184,150,42,.1);color:var(--yellow);border:1px solid rgba(184,150,42,.2)}
+.b-L{background:rgba(122,171,130,.08);color:var(--green);border:1px solid rgba(122,171,130,.15)}
+.fname{color:var(--beige2);font-size:11px}
+.snippet{color:var(--text3);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+
+/* expanded detail */
+.det-row td{padding:0;background:var(--bg)}
+.det-inner{padding:20px 24px;border-bottom:1px solid var(--border);animation:sd .2s ease}
+@keyframes sd{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.det-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.det-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.det-card-t{font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;font-family:var(--mono)}
+.det-card p{font-size:13px;color:var(--text);line-height:1.6}
+.code-ctx{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:12px;font-family:var(--mono);font-size:11px;overflow-x:auto;white-space:pre;line-height:1.7;margin-bottom:12px}
+.d-del{color:var(--red)}.d-ins{color:var(--green)}.d-ctx{color:var(--text3)}.d-tgt{color:var(--yellow)}
+.fix-area{margin-top:4px}
+.fix-loading{display:flex;align-items:center;gap:8px;color:var(--text3);font-family:var(--mono);font-size:11px;padding:10px 0}
+.spin{width:14px;height:14px;border:1px solid var(--border2);border-top-color:var(--beige3);border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+.rc-ok{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-family:var(--mono);font-size:10px;background:rgba(122,171,130,.1);color:var(--green);border:1px solid rgba(122,171,130,.2)}
+.rc-bad{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-family:var(--mono);font-size:10px;background:rgba(192,97,74,.1);color:var(--red);border:1px solid rgba(192,97,74,.2)}
+
+/* ── Scorecard ── */
+.sc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px}
+.sc-card{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r2);padding:20px}
+.sc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.sc-title{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase}
+.sc-num{font-family:var(--mono);font-size:32px;font-weight:300;color:var(--beige);line-height:1}
+.sc-denom{font-size:12px;color:var(--text3)}
+.sc-bar{height:3px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:12px}
+.sc-bar-fill{height:100%;border-radius:99px;transition:width 1.2s cubic-bezier(.2,.8,.3,1)}
+.sc-detail{font-size:12px;color:var(--text3);line-height:1.8}
+.sc-detail span{color:var(--text)}
+.sc-overall{background:var(--bg2);border:1px solid var(--beige3);border-radius:var(--r2);padding:20px;text-align:center;grid-column:1/-1}
+.sc-overall-n{font-family:var(--mono);font-size:52px;font-weight:300;color:var(--sand);line-height:1}
+.sc-overall-l{font-size:12px;color:var(--text3);letter-spacing:1px;margin-top:4px}
+
+/* ── GitHub section ── */
+.gh-card{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r2);padding:20px;margin-bottom:16px}
+.gh-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.gh-title{font-family:var(--mono);font-size:13px;color:var(--beige)}
+.gh-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.gh-stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px}
+.gh-stat-n{font-family:var(--mono);font-size:20px;font-weight:300;color:var(--sand)}
+.gh-stat-l{font-size:10px;color:var(--text3);letter-spacing:.5px}
+.flags{margin-top:10px}
+.flag{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:rgba(184,150,42,.06);border:1px solid rgba(184,150,42,.15);border-radius:var(--r);margin-bottom:6px;font-size:12px;color:var(--yellow)}
+.flag::before{content:"⚑";flex-shrink:0;font-size:11px}
+
+/* ── Review panel ── */
+.review-panel{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r2);padding:24px}
+.review-section{margin-bottom:20px}
+.review-section-title{font-family:var(--mono);font-size:10px;color:var(--beige3);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.review-section p{font-size:13px;color:var(--text);line-height:1.7}
+.review-list{list-style:none;padding:0}
+.review-list li{display:flex;gap:8px;padding:7px 0;font-size:13px;color:var(--text);line-height:1.5;border-bottom:1px solid var(--border)}
+.review-list li:last-child{border:none}
+.review-list li::before{content:"→";color:var(--beige3);flex-shrink:0;margin-top:1px}
+.review-list.w li::before{content:"→";color:var(--red)}
+.verdict-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;font-size:13px;color:var(--text);line-height:1.6}
+.q-item{padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;display:flex;gap:10px}
+.q-num{font-family:var(--mono);font-size:10px;color:var(--beige3);flex-shrink:0;margin-top:2px}
+.q-text{font-size:13px;color:var(--text);line-height:1.6}
+.gen-review-btn{margin-top:16px}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:60px 20px}
+.empty-icon{font-size:36px;opacity:.2;margin-bottom:12px}
+.empty-text{font-family:var(--mono);font-size:12px;color:var(--text3);letter-spacing:.5px}
+
+/* ── Responsive ── */
+@media(max-width:800px){.stats{grid-template-columns:1fr 1fr}.det-grid{grid-template-columns:1fr}.sc-grid{grid-template-columns:1fr}.gh-meta{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.row.r3{grid-template-columns:1fr}.stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">SS</div>
+    <div>
+      <div class="logo-text">SECURESCAN</div>
+      <div class="logo-sub">AI VULNERABILITY ANALYZER</div>
+    </div>
+  </div>
+  <div class="header-pills">
+    <div class="pill"><div class="dot" id="apiDot"></div><span id="apiLbl">API</span></div>
+    <div class="pill"><div class="dot" id="ollamaDot"></div><span id="ollamaLbl">Ollama</span></div>
+  </div>
+</header>
+
+<!-- Input -->
+<div class="panel">
+  <div class="panel-label">Select Source</div>
+  <div class="src-tabs">
+    <button class="src-tab active" onclick="switchSrc('local')">📁 Local Directory</button>
+    <button class="src-tab" onclick="switchSrc('zip')">📦 ZIP Upload</button>
+    <button class="src-tab" onclick="switchSrc('github')">🔗 GitHub URL</button>
+  </div>
+
+  <!-- Local -->
+  <div class="src-pane active" id="pane-local">
+    <div class="row r2">
+      <div class="field">
+        <label class="lbl">Directory Path</label>
+        <input type="text" id="localPath" placeholder="/home/user/my-project or C:\projects\app">
+      </div>
+      <button class="btn btn-primary" id="scanBtn" onclick="doScan()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Scan
+      </button>
+    </div>
+  </div>
+
+  <!-- ZIP -->
+  <div class="src-pane" id="pane-zip">
+    <div class="dropzone" id="dz" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+      <input type="file" accept=".zip" id="zipFile" onchange="handleZipSelect(this)">
+      <div class="dz-icon">📦</div>
+      <div class="dz-text">Drop ZIP file here or click to browse</div>
+      <div class="dz-file" id="dzFile"></div>
+    </div>
+    <div style="margin-top:12px;text-align:right">
+      <button class="btn btn-primary" id="zipScanBtn" onclick="doZipScan()" disabled>
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Scan ZIP
+      </button>
+    </div>
+  </div>
+
+  <!-- GitHub -->
+  <div class="src-pane" id="pane-github">
+    <div class="row r3">
+      <div class="field">
+        <label class="lbl">GitHub Repository URL</label>
+        <input type="url" id="ghUrl" placeholder="https://github.com/owner/repo">
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="prefillGhDemo()">Use Example</button>
+      <button class="btn btn-primary" id="ghScanBtn" onclick="doGhScan()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Scan Repo
+      </button>
+    </div>
+    <p style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:6px">Public repos only · Repository will be cloned locally for analysis · GitHub metadata fetched via API</p>
+  </div>
+</div>
+
+<!-- Log -->
+<div class="log" id="log"></div>
+
+<!-- Stats -->
+<div class="stats" id="stats">
+  <div class="stat"><div class="stat-n red" id="sHigh">0</div><div class="stat-l">High Severity</div><div class="stat-bar"><div class="stat-bar-fill" id="bHigh" style="background:var(--red);width:0"></div></div></div>
+  <div class="stat"><div class="stat-n yellow" id="sMed">0</div><div class="stat-l">Medium Severity</div><div class="stat-bar"><div class="stat-bar-fill" id="bMed" style="background:var(--yellow);width:0"></div></div></div>
+  <div class="stat"><div class="stat-n" id="sLow">0</div><div class="stat-l">Low Severity</div><div class="stat-bar"><div class="stat-bar-fill" id="bLow" style="background:var(--green);width:0"></div></div></div>
+  <div class="stat"><div class="stat-n beige" id="sFiles">0</div><div class="stat-l">Files Scanned</div></div>
+  <div class="stat"><div class="stat-n green" id="sScore">—</div><div class="stat-l">Overall Score</div></div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs" id="tabs">
+  <div class="tab active" data-tab="findings" onclick="switchTab('findings')">Findings <span id="findCount"></span></div>
+  <div class="tab" data-tab="scorecard" onclick="switchTab('scorecard')">Scorecard</div>
+  <div class="tab" data-tab="review" onclick="switchTab('review')">AI Review</div>
+  <div class="tab" data-tab="github" onclick="switchTab('github')" id="ghTab" style="display:none">GitHub Info</div>
+</div>
+
+<!-- Tab: Findings -->
+<div class="tc active" id="tc-findings">
+  <div class="filter-row" id="filterRow" style="display:none">
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">FILTER</span>
+    <button class="fbtn a" data-f="ALL" onclick="filter('ALL')">All <span id="fc-ALL"></span></button>
+    <button class="fbtn" data-f="HIGH" onclick="filter('HIGH')">● High <span id="fc-HIGH"></span></button>
+    <button class="fbtn" data-f="MEDIUM" onclick="filter('MEDIUM')">● Medium <span id="fc-MEDIUM"></span></button>
+    <button class="fbtn" data-f="LOW" onclick="filter('LOW')">● Low <span id="fc-LOW"></span></button>
+  </div>
+  <div id="findingsArea">
+    <div class="empty" id="emptyState">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-text">No scan results yet — enter a source above and scan.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab: Scorecard -->
+<div class="tc" id="tc-scorecard">
+  <div id="scorecardArea"></div>
+</div>
+
+<!-- Tab: Review -->
+<div class="tc" id="tc-review">
+  <div id="reviewArea">
+    <div class="empty"><div class="empty-icon">⚖</div><div class="empty-text">Run a scan first, then generate the AI review.</div></div>
+  </div>
+</div>
+
+<!-- Tab: GitHub -->
+<div class="tc" id="tc-github">
+  <div id="githubArea"></div>
+</div>
+
+</div><!-- #app -->
+
+<script>
+const API = 'http://localhost:8000/api';
+let S = { findings:[], scores:null, scanned:0, github:null, ghFlags:[], fixCache:{}, activeFilter:'ALL', autoFix:true };
+let zipBytes = null;
+let activeSrc = 'local';
+
+// ── Init ──────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  checkHealth();
+  setInterval(checkHealth, 12000);
+  document.getElementById('localPath').addEventListener('keydown', e => { if (e.key==='Enter') doScan(); });
+  document.getElementById('ghUrl').addEventListener('keydown', e => { if (e.key==='Enter') doGhScan(); });
+});
+
+async function checkHealth() {
+  try {
+    const r = await fetch(`${API}/health`, { signal: AbortSignal.timeout(4000) });
+    const d = await r.json();
+    setDot('apiDot','apiLbl','API Online',true);
+    setDot('ollamaDot','ollamaLbl', d.ollama.online ? 'Ollama Online':'Ollama Offline', d.ollama.online);
+  } catch {
+    setDot('apiDot','apiLbl','API Offline',false);
+    setDot('ollamaDot','ollamaLbl','Unknown',null);
+  }
+}
+function setDot(dotId, lblId, txt, state) {
+  document.getElementById(dotId).className = 'dot' + (state===true?' on':state===false?' off':'');
+  document.getElementById(lblId).textContent = txt;
+}
+
+// ── Source switching ──────────────────────────────────────────────────────
+function switchSrc(src) {
+  activeSrc = src;
+  document.querySelectorAll('.src-tab').forEach((t,i) => t.classList.toggle('active', ['local','zip','github'][i]===src));
+  document.querySelectorAll('.src-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById(`pane-${src}`).classList.add('active');
+}
+
+// ── Drop zone ─────────────────────────────────────────────────────────────
+function handleZipSelect(input) {
+  if (!input.files[0]) return;
+  const f = input.files[0];
+  document.getElementById('dzFile').textContent = f.name + ' (' + (f.size/1024).toFixed(1) + ' KB)';
+  document.getElementById('dz').classList.remove('drag');
+  readZip(f);
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dz').classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (!f || !f.name.endsWith('.zip')) { logLine('Only ZIP files are supported.','lerr'); return; }
+  document.getElementById('dzFile').textContent = f.name + ' (' + (f.size/1024).toFixed(1) + ' KB)';
+  readZip(f);
+}
+function readZip(f) {
+  const r = new FileReader();
+  r.onload = e => {
+    zipBytes = e.target.result;
+    document.getElementById('zipScanBtn').disabled = false;
+  };
+  r.readAsArrayBuffer(f);
+}
+
+function prefillGhDemo() {
+  document.getElementById('ghUrl').value = 'https://github.com/OWASP/NodeGoat';
+}
+
+// ── Log ───────────────────────────────────────────────────────────────────
+function logShow() { const l=document.getElementById('log'); l.innerHTML=''; l.classList.add('show'); }
+function logLine(msg, cls='li') {
+  const l = document.getElementById('log');
+  const t = new Date().toLocaleTimeString('en',{hour12:false});
+  const d = document.createElement('div');
+  d.className = 'log-line';
+  d.innerHTML = `<span class="lt">${t}</span><span class="${cls}">${esc(msg)}</span>`;
+  l.appendChild(d);
+  l.scrollTop = l.scrollHeight;
+}
+function logDone() {
+  const l = document.getElementById('log');
+  const last = l.querySelector('.log-line:last-child span:last-child');
+  if (last) last.innerHTML += '<span class="blink"></span>';
+}
+
+// ── Scan handlers ─────────────────────────────────────────────────────────
+async function doScan() {
+  const path = document.getElementById('localPath').value.trim();
+  if (!path) return;
+  setBtns(true);
+  logShow();
+  logLine(`Scanning local directory: ${path}`);
+  try {
+    const r = await fetch(`${API}/scan/local`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({path})
+    });
+    await handleScanResponse(r);
+  } catch(e) { logLine(`Cannot reach API: ${e.message}. Is the server running?`,'lerr'); }
+  finally { setBtns(false); }
+}
+
+async function doZipScan() {
+  if (!zipBytes) return;
+  setBtns(true);
+  logShow();
+  logLine('Uploading and extracting ZIP...');
+  try {
+    const blob = new Blob([zipBytes],{type:'application/zip'});
+    const fd = new FormData(); fd.append('file', blob, 'upload.zip');
+    const r = await fetch(`${API}/scan/zip`, {method:'POST', body:fd});
+    await handleScanResponse(r);
+  } catch(e) { logLine(`Error: ${e.message}`,'lerr'); }
+  finally { setBtns(false); }
+}
+
+async function doGhScan() {
+  const url = document.getElementById('ghUrl').value.trim();
+  if (!url) return;
+  setBtns(true);
+  logShow();
+  logLine(`Fetching GitHub metadata for ${url}...`);
+  logLine('Cloning repository (this may take 15-30 seconds)...','lt');
+  try {
+    const r = await fetch(`${API}/scan/github`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({url})
+    });
+    await handleScanResponse(r);
+  } catch(e) { logLine(`Error: ${e.message}`,'lerr'); }
+  finally { setBtns(false); }
+}
+
+async function handleScanResponse(r) {
+  if (!r.ok) {
+    const d = await r.json().catch(()=>({detail:'Unknown error'}));
+    logLine(d.detail || d.error || r.statusText, 'lerr'); return;
+  }
+  const d = await r.json();
+  S.findings = d.findings || [];
+  S.scores   = d.scores;
+  S.scanned  = d.scanned;
+  S.github   = d.github || null;
+  S.ghFlags  = d.github_flags || [];
+  S.fixCache = {};
+
+  const high = S.findings.filter(f=>f.severity==='HIGH').length;
+  const med  = S.findings.filter(f=>f.severity==='MEDIUM').length;
+  const low  = S.findings.filter(f=>f.severity==='LOW').length;
+
+  logLine(`Scanned ${d.scanned} files — ${S.findings.length} findings (${high} HIGH, ${med} MEDIUM, ${low} LOW)`,'lok');
+  logDone();
+
+  renderStats();
+  renderFindings();
+  renderScorecard();
+  if (S.github) renderGitHub();
+
+  document.getElementById('stats').classList.add('show');
+  document.getElementById('tabs').classList.add('show');
+  document.getElementById('ghTab').style.display = S.github ? '' : 'none';
+  switchTab('findings');
+  // Prefetch review in background
+  prefetchReview();
+}
+
+function setBtns(disabled) {
+  ['scanBtn','zipScanBtn','ghScanBtn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = disabled;
+  });
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────
+function renderStats() {
+  const high = S.findings.filter(f=>f.severity==='HIGH').length;
+  const med  = S.findings.filter(f=>f.severity==='MEDIUM').length;
+  const low  = S.findings.filter(f=>f.severity==='LOW').length;
+  countUp('sHigh',high); countUp('sMed',med); countUp('sLow',low);
+  countUp('sFiles',S.scanned);
+  document.getElementById('sScore').textContent = S.scores?.overall ?? '—';
+  const total = Math.max(S.findings.length,1);
+  setTimeout(() => {
+    document.getElementById('bHigh').style.width = (high/total*100)+'%';
+    document.getElementById('bMed').style.width  = (med/total*100)+'%';
+    document.getElementById('bLow').style.width  = (low/total*100)+'%';
+  }, 100);
+}
+function countUp(id, target) {
+  const el = document.getElementById(id); let cur=0;
+  const s = Math.max(1,Math.ceil(target/20));
+  const iv = setInterval(()=>{ cur=Math.min(cur+s,target); el.textContent=cur; if(cur>=target)clearInterval(iv); },30);
+}
+
+// ── Findings ──────────────────────────────────────────────────────────────
+let expandedIdx = null;
+
+function renderFindings() {
+  const area = document.getElementById('findingsArea');
+  const filterRow = document.getElementById('filterRow');
+  document.getElementById('emptyState') && document.getElementById('emptyState').remove();
+  filterRow.style.display = S.findings.length ? 'flex' : 'none';
+  document.getElementById('findCount').textContent = `(${S.findings.length})`;
+  ['ALL','HIGH','MEDIUM','LOW'].forEach(k => {
+    const el = document.getElementById(`fc-${k}`);
+    if (el) el.textContent = k==='ALL' ? `(${S.findings.length})` : `(${S.findings.filter(f=>f.severity===k).length})`;
+  });
+  if (!S.findings.length) {
+    area.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">No vulnerabilities detected in scanned files.</div></div>';
+    return;
+  }
+  applyFilter(S.activeFilter);
+}
+
+function filter(sev) {
+  S.activeFilter = sev;
+  expandedIdx = null;
+  document.querySelectorAll('.fbtn').forEach(b => {
+    const f = b.dataset.f;
+    b.className = 'fbtn' + (f===sev ? (sev==='ALL'?' a':sev==='HIGH'?' a-H':sev==='MEDIUM'?' a-M':' a-L') : '');
+  });
+  applyFilter(sev);
+}
+
+function applyFilter(sev) {
+  const visible = sev==='ALL' ? S.findings : S.findings.filter(f=>f.severity===sev);
+  const area = document.getElementById('findingsArea');
+  if (!visible.length) {
+    area.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">No ${sev} severity findings.</div></div>`;
+    return;
+  }
+  let html = `<div style="overflow-x:auto"><table class="ftable"><thead><tr><th>#</th><th>ID</th><th>Vulnerability</th><th>Severity</th><th>File</th><th>Line</th><th>Snippet</th></tr></thead><tbody>`;
+  visible.forEach((f, vi) => {
+    const oi = S.findings.indexOf(f);
+    html += `<tr class="frow" id="fr-${oi}" onclick="toggleDet(${oi})">
+      <td style="color:var(--text3)">${vi+1}</td>
+      <td style="font-size:10px;color:var(--text3)">${esc(f.rule_id)}</td>
+      <td style="font-weight:500">${esc(f.name)}</td>
+      <td><span class="badge b-${f.severity[0]}">${f.severity}</span></td>
+      <td class="fname">${esc(basename(f.file))}</td>
+      <td style="color:var(--text3);font-size:11px">${f.line_num}</td>
+      <td class="snippet">${esc(f.line_content)}</td>
+    </tr>
+    <tr class="det-row" id="dr-${oi}" style="display:none"><td colspan="7"><div class="det-inner" id="di-${oi}"></div></td></tr>`;
+  });
+  html += '</tbody></table></div>';
+  area.innerHTML = html;
+}
+
+function toggleDet(idx) {
+  if (expandedIdx === idx) {
+    document.getElementById(`dr-${idx}`).style.display = 'none';
+    document.getElementById(`fr-${idx}`).classList.remove('open');
+    expandedIdx = null; return;
+  }
+  if (expandedIdx !== null) {
+    const prev = document.getElementById(`dr-${expandedIdx}`);
+    const prevr = document.getElementById(`fr-${expandedIdx}`);
+    if(prev) prev.style.display='none';
+    if(prevr) prevr.classList.remove('open');
+  }
+  expandedIdx = idx;
+  document.getElementById(`fr-${idx}`).classList.add('open');
+  const dr = document.getElementById(`dr-${idx}`);
+  dr.style.display = 'table-row';
+  renderDetail(idx, S.findings[idx]);
+  // NO auto-fix — user must click the button
+}
+
+function renderDetail(idx, f) {
+  // If fix already cached, show it directly
+  const hasFix = !!S.fixCache[idx];
+  const fixSection = hasFix
+    ? renderFixHtml(S.fixCache[idx], f)
+    : `<div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-top:1px solid var(--border);margin-top:4px">
+        <button class="btn btn-ghost btn-sm" onclick="fetchFix(${idx}, S.findings[${idx}])">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Generate Fix
+        </button>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text3)">Click to generate an AI-powered secure fix via deepseek-coder</span>
+      </div>`;
+
+  document.getElementById(`di-${idx}`).innerHTML = `
+    <div class="det-grid">
+      <div class="det-card"><div class="det-card-t">Description</div><p>${esc(f.description)}</p></div>
+      <div class="det-card"><div class="det-card-t">Attack Vector</div><p style="color:var(--red)">${esc(f.attack)}</p></div>
+    </div>
+    <div class="det-card-t" style="margin-bottom:6px">Vulnerable Code</div>
+    <div class="code-ctx">${ctxHtml(f)}</div>
+    <div class="fix-area" id="fix-${idx}">${fixSection}</div>`;
+}
+
+function ctxHtml(f) {
+  if (!f.context) return `<span class="d-del">  ${esc(f.line_content)}</span>`;
+  return f.context.split('\n').map(line => {
+    if (line.includes('>>>')) return `<span class="d-tgt">${esc(line)}</span>`;
+    return `<span class="d-ctx">${esc(line)}</span>`;
+  }).join('\n');
+}
+
+async function fetchFix(idx, finding) {
+  const area = document.getElementById(`fix-${idx}`);
+  if (!area) return;
+  if (S.fixCache[idx]) { area.innerHTML = renderFixHtml(S.fixCache[idx], finding); return; }
+
+  // Show loading
+  area.innerHTML = `<div class="fix-loading" style="border-top:1px solid var(--border);padding:14px 0;margin-top:4px"><div class="spin"></div><span>Generating secure fix via deepseek-coder&hellip;</span></div>`;
+
+  try {
+    const r = await fetch(`${API}/fix`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({finding})
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      area.innerHTML = `
+        <div style="border-top:1px solid var(--border);padding:14px 0;margin-top:4px;display:flex;align-items:center;gap:12px">
+          <span style="color:var(--red);font-family:var(--mono);font-size:11px">${esc(data.detail || 'Fix generation failed')}</span>
+          <button class="btn btn-ghost btn-sm" onclick="fetchFix(${idx}, S.findings[${idx}])">Retry</button>
+        </div>`;
+      return;
+    }
+    if (data.error) {
+      area.innerHTML = `
+        <div style="border-top:1px solid var(--border);padding:14px 0;margin-top:4px;display:flex;align-items:center;gap:12px">
+          <span style="color:var(--yellow);font-family:var(--mono);font-size:11px">${esc(data.error)}</span>
+          <button class="btn btn-ghost btn-sm" onclick="fetchFix(${idx}, S.findings[${idx}])">Retry</button>
+        </div>`;
+      return;
+    }
+    S.fixCache[idx] = data;
+    area.innerHTML = renderFixHtml(data, finding);
+  } catch(e) {
+    if(area) area.innerHTML = `
+      <div style="border-top:1px solid var(--border);padding:14px 0;margin-top:4px;display:flex;align-items:center;gap:12px">
+        <span style="color:var(--text3);font-family:var(--mono);font-size:11px">Could not reach API: ${esc(e.message)}</span>
+        <button class="btn btn-ghost btn-sm" onclick="fetchFix(${idx}, S.findings[${idx}])">Retry</button>
+      </div>`;
+  }
+}
+
+function renderFixHtml(data, finding) {
+  if (!data) return '';
+  if (data.error && !data.explanation && !data.fix) {
+    return `<div style="border-top:1px solid var(--border);padding:14px 0;margin-top:4px;display:flex;align-items:center;gap:12px">
+      <span style="color:var(--yellow);font-family:var(--mono);font-size:11px">${esc(data.error)}</span>
+    </div>`;
+  }
+  const rc = data.recheck || {};
+  const rcHtml = rc.secure === true
+    ? `<span class="rc-ok">✓ Re-check passed — secure</span>`
+    : rc.secure === false
+      ? `<span class="rc-bad">✗ ${esc(rc.reason || 'Still vulnerable')}</span>`
+      : '';
+  const diff = (data.fix) ? buildDiff(finding?.line_content || '', data.fix) : '';
+  return `
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+    <div class="det-grid">
+      <div class="det-card"><div class="det-card-t">Why It's Vulnerable</div><p>${esc(data.explanation || '—')}</p></div>
+      <div class="det-card"><div class="det-card-t">Why The Fix Works</div><p>${esc(data.prevention || '—')}</p></div>
+    </div>
+    ${diff ? `<div class="det-card-t" style="margin:10px 0 6px">Patch Preview</div><div class="code-ctx" style="margin-bottom:12px">${diff}</div>` : ''}
+    ${rcHtml ? `<div style="display:flex;align-items:center;gap:10px">${rcHtml}</div>` : ''}
+    </div>`;
+}
+
+function buildDiff(orig, fixed) {
+  let out = '';
+  orig.split('\n').forEach(l => out += `<span class="d-del">- ${esc(l)}</span>\n`);
+  fixed.split('\n').forEach(l => out += `<span class="d-ins">+ ${esc(l)}</span>\n`);
+  return out;
+}
+
+// ── Scorecard ─────────────────────────────────────────────────────────────
+function renderScorecard() {
+  if (!S.scores) return;
+  const sc = S.scores;
+  const cards = [
+    { title:'Security',    score:sc.security?.score??0,    color:'var(--red)',    detail: `
+      <span>${sc.security?.high??0} HIGH</span> · <span>${sc.security?.medium??0} MEDIUM</span> · <span>${sc.security?.low??0} LOW</span>
+      <br>Deductions: ${12*(sc.security?.high??0) + 5*(sc.security?.medium??0) + 2*(sc.security?.low??0)} pts` },
+    { title:'Credibility', score:sc.credibility?.score??0, color:'var(--yellow)', detail: `
+      Fake metrics: <span>${sc.credibility?.fake_metrics??0}</span><br>
+      AI claims in README: <span>${sc.credibility?.ai_claims??0}</span><br>
+      AI libraries found: <span>${sc.credibility?.ai_libs??0}</span><br>
+      Verdict: <span>${esc(sc.credibility?.verdict||'—')}</span>` },
+    { title:'Completeness', score:sc.completeness?.score??0, color:'var(--beige)', detail: `
+      Present: <span>${(sc.completeness?.present||[]).join(', ')||'none'}</span><br>
+      Missing: <span>${(sc.completeness?.missing||[]).join(', ')||'none'}</span><br>
+      Has tests: <span>${sc.completeness?.has_tests?'Yes':'No'}</span>` },
+    { title:'Code Quality', score:sc.code_quality?.score??0, color:'var(--green)', detail: `
+      Files: <span>${sc.code_quality?.files??0}</span> · Lines: <span>${sc.code_quality?.total_lines??0}</span><br>
+      Comment ratio: <span>${sc.code_quality?.comment_ratio??0}%</span>` },
+  ];
+
+  let html = `<div class="sc-overall"><div class="sc-overall-n">${sc.overall??'—'}</div><div class="sc-overall-l">OVERALL SCORE / 100</div></div>`;
+  html += '<div class="sc-grid">';
+  cards.forEach(c => {
+    html += `<div class="sc-card">
+      <div class="sc-top">
+        <div class="sc-title">${c.title}</div>
+        <div><span class="sc-num" style="color:${c.color}">${c.score}</span><span class="sc-denom">/100</span></div>
+      </div>
+      <div class="sc-bar"><div class="sc-bar-fill" data-w="${c.score}" style="background:${c.color};width:0"></div></div>
+      <div class="sc-detail">${c.detail}</div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('scorecardArea').innerHTML = html;
+  setTimeout(()=>{
+    document.querySelectorAll('.sc-bar-fill').forEach(el => el.style.width = el.dataset.w+'%');
+  },100);
+}
+
+// ── GitHub ────────────────────────────────────────────────────────────────
+function renderGitHub() {
+  const gh = S.github;
+  if (!gh) return;
+  let flagsHtml = S.ghFlags.length
+    ? `<div class="flags">${S.ghFlags.map(f=>`<div class="flag">${esc(f)}</div>`).join('')}</div>`
+    : `<div style="color:var(--green);font-family:var(--mono);font-size:11px;margin-top:8px">✓ No credibility flags detected</div>`;
+  const html = `
+    <div class="gh-card">
+      <div class="gh-header">
+        <svg width="18" height="18" fill="var(--beige3)" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        <span class="gh-title">${esc(gh.name||'')}</span>
+        ${gh.language ? `<span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:4px">${esc(gh.language)}</span>` : ''}
+        ${gh.archived ? `<span style="font-family:var(--mono);font-size:9px;color:var(--red);border:1px solid rgba(192,97,74,.3);padding:2px 6px;border-radius:3px">ARCHIVED</span>` : ''}
+      </div>
+      ${gh.description ? `<p style="font-size:13px;color:var(--text2);margin-bottom:14px">${esc(gh.description)}</p>` : ''}
+      <div class="gh-meta">
+        <div class="gh-stat"><div class="gh-stat-n">${gh.stars??0}</div><div class="gh-stat-l">Stars</div></div>
+        <div class="gh-stat"><div class="gh-stat-n">${gh.forks??0}</div><div class="gh-stat-l">Forks</div></div>
+        <div class="gh-stat"><div class="gh-stat-n">${gh.contributors??0}</div><div class="gh-stat-l">Contributors</div></div>
+        <div class="gh-stat"><div class="gh-stat-n">${gh.open_issues??0}</div><div class="gh-stat-l">Open Issues</div></div>
+        <div class="gh-stat"><div class="gh-stat-n">${gh.commits_last_4w??'?'}</div><div class="gh-stat-l">Commits (4w)</div></div>
+        <div class="gh-stat"><div class="gh-stat-n" style="font-size:14px">${esc(gh.license||'None')}</div><div class="gh-stat-l">License</div></div>
+      </div>
+      ${gh.topics?.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${gh.topics.map(t=>`<span style="font-family:var(--mono);font-size:10px;padding:2px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:99px;color:var(--text2)">${esc(t)}</span>`).join('')}</div>` : ''}
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;margin-top:4px">Credibility Flags</div>
+      ${flagsHtml}
+    </div>`;
+  document.getElementById('githubArea').innerHTML = html;
+}
+
+// ── Review ────────────────────────────────────────────────────────────────
+let reviewFetched = false;
+async function prefetchReview() {
+  reviewFetched = false;
+  document.getElementById('reviewArea').innerHTML = `
+    <div style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-family:var(--mono);font-size:12px;color:var(--text3)">AI-powered project review using deepseek-r1</div>
+      <button class="btn btn-ghost btn-sm gen-review-btn" onclick="generateReview()">Generate Review</button>
+    </div>
+    <div class="empty"><div class="empty-icon">⚖</div><div class="empty-text">Click "Generate Review" to get a full AI assessment with judge questions.</div></div>`;
+}
+
+async function generateReview() {
+  if (!S.scores) return;
+  const area = document.getElementById('reviewArea');
+  area.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;padding:48px 20px;color:var(--text3);font-family:var(--mono);font-size:11px;justify-content:center;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="spin" style="border-top-color:var(--beige3);width:16px;height:16px"></div>
+        <span>Generating project review via deepseek-r1…</span>
+      </div>
+      <span style="color:var(--text3);font-size:10px">This may take 30–90 seconds depending on model load</span>
+    </div>`;
+  const fs = {};
+  S.findings.forEach(f => { fs[f.name] = (fs[f.name]||0)+1; });
+  try {
+    const r = await fetch(`${API}/review`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ scores:S.scores, findings_summary:fs, github:S.github })
+    });
+    const d = await r.json();
+    if (!r.ok) {
+      area.innerHTML = errBlock(d.detail || 'Review failed — check that Ollama is running.', 'generateReview()');
+      return;
+    }
+    if (d.error && !d.overview) {
+      area.innerHTML = errBlock(d.error, 'generateReview()');
+      return;
+    }
+    renderReview(d);
+    reviewFetched = true;
+  } catch(e) {
+    area.innerHTML = errBlock(`Network error: ${e.message}`, 'generateReview()');
+  }
+}
+
+function errBlock(msg, retryFn) {
+  return `<div style="padding:24px;display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+    <span style="color:var(--red);font-family:var(--mono);font-size:12px">${esc(msg)}</span>
+    <button class="btn btn-ghost btn-sm" onclick="${retryFn}">↺ Retry</button>
+  </div>`;
+}
+
+function renderReview(d) {
+  // Show parse warning if any
+  const warnHtml = d.error ? `<div style="font-family:var(--mono);font-size:10px;color:var(--yellow);background:rgba(184,150,42,.08);border:1px solid rgba(184,150,42,.2);border-radius:var(--r);padding:8px 12px;margin-bottom:16px">${esc(d.error)}</div>` : '';
+
+  const strengthsHtml = (d.strengths||[]).length
+    ? `<ul class="review-list">${(d.strengths||[]).map(s=>`<li>${esc(s)}</li>`).join('')}</ul>`
+    : '<p style="color:var(--text3);font-size:13px">None identified.</p>';
+  const weakHtml = (d.weaknesses||[]).length
+    ? `<ul class="review-list w">${(d.weaknesses||[]).map(w=>`<li>${esc(w)}</li>`).join('')}</ul>`
+    : '<p style="color:var(--text3);font-size:13px">None identified.</p>';
+
+  // judge_questions may be mixed: ["Q1: text", "text", ...]
+  const questions = (d.judge_questions||[]).filter(q => q && q.trim());
+  const qHtml = questions.length
+    ? questions.map((q,i) => {
+        // strip leading "Q1: " prefix if present (parser may or may not have it)
+        const text = q.replace(/^Q\d+:\s*/i,'');
+        return `<div class="q-item"><span class="q-num">Q${i+1}</span><span class="q-text">${esc(text)}</span></div>`;
+      }).join('')
+    : '<div style="color:var(--text3);font-size:12px;font-family:var(--mono)">No questions generated.</div>';
+
+  document.getElementById('reviewArea').innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+      <button class="btn btn-ghost btn-sm" onclick="generateReview()">↺ Regenerate</button>
+    </div>
+    ${warnHtml}
+    <div class="review-panel">
+      <div class="review-section">
+        <div class="review-section-title">Overview</div>
+        <p>${esc(d.overview || '—')}</p>
+      </div>
+      <div class="review-section">
+        <div class="review-section-title">Strengths</div>
+        ${strengthsHtml}
+      </div>
+      <div class="review-section">
+        <div class="review-section-title">Weaknesses &amp; Risks</div>
+        ${weakHtml}
+      </div>
+      ${d.security_verdict ? `
+      <div class="review-section">
+        <div class="review-section-title">Security Verdict</div>
+        <div class="verdict-box">${esc(d.security_verdict)}</div>
+      </div>` : ''}
+      <div class="review-section">
+        <div class="review-section-title">Judge Questions</div>
+        ${qHtml}
+      </div>
+    </div>`;
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+  document.querySelectorAll('.tc').forEach(c=>c.classList.toggle('active', c.id===`tc-${name}`));
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function basename(p){ return String(p||'').replace(/\\/g,'/').split('/').pop(); }
+</script>
+</body>
+</html>
